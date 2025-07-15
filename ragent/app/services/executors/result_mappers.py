@@ -327,15 +327,13 @@ class RedditResultMapper(ResultMapper):
                 reddit_post = RedditPostModel(
                     subreddit=post.subreddit,
                     post_id=post_id,
+                    post_author=post.post_author,
                     post_title=post.post_title,
                     post_body=post.post_body or "",
                     post_url=post.post_url,
                     created_utc=created_utc,
                     upvotes=post.upvotes or 0,
                     comment_count=post.comment_count or 0,
-                    
-                    # Combined text for embeddings/search (core post data)
-                    text=post.text
                 )
 
                 posts_to_add.append(reddit_post)

@@ -1,12 +1,14 @@
 from typing import List, Optional
 from pydantic import BaseModel, Field
 from datetime import datetime
+from asyncpraw.models import Submission
 
 class RedditPost(BaseModel):
     """Comprehensive Reddit post schema used across the Reddit agent."""
     
     # Core Reddit API fields
     subreddit: str = Field(..., description="Subreddit name without the r/ prefix")
+    post_author: str = Field(..., description="Reddit submission author")
     post_id: str = Field(..., description="Reddit submission id")
     post_title: str = Field(..., description="Submission title")
     post_body: str = Field(..., description="Submission self-text (may be empty)")
@@ -49,7 +51,7 @@ class RedditPost(BaseModel):
         }
     
     @classmethod
-    def from_reddit_submission(cls, submission, subreddit_name: str, keyword_relevance: float = 0.0, 
+    def from_reddit_submission(cls, submission: Submission, subreddit_name: str, keyword_relevance: float = 0.0, 
                              matched_query: Optional[str] = None, sort_method: Optional[str] = None):
         """Create RedditPost from asyncpraw submission object."""
         created_iso = datetime.utcfromtimestamp(submission.created_utc).isoformat()
@@ -58,6 +60,7 @@ class RedditPost(BaseModel):
         return cls(
             subreddit=subreddit_name,
             post_id=submission.id,
+            post_author=submission.author.name if submission.author else "[deleted]",
             post_title=submission.title,
             post_body=submission.selftext,
             post_url=f"https://www.reddit.com{submission.permalink}",

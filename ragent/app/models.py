@@ -123,17 +123,18 @@ class RedditPostModel(Base):
     id = Column(Integer, primary_key=True, index=True)
     subreddit = Column(String)
     post_id = Column(String, unique=True)
+    post_author = Column(String)
     post_title = Column(String)
     post_body = Column(String)
     post_url = Column(String)
     created_utc = Column(DateTime)
     upvotes = Column(Integer)
     comment_count = Column(Integer, default=0)
-    
-    # Combined text for embeddings/search (this is core post data, not execution-specific)
-    text = Column(Text)  # Combined title + body text
-    
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    execution_mappings = relationship("RedditAgentExecutionMapperModel", cascade="all, delete-orphan")
 
     # create an index on post_id
     __table_args__ = (Index('idx_post_id', "post_id", unique=True),)
@@ -266,7 +267,7 @@ class RedditAgentExecutionMapperModel(Base):
     id = Column(Integer, primary_key=True, index=True)
     execution_id = Column(Integer, ForeignKey("executions.id"))
     agent_id = Column(Integer, ForeignKey("agents.id"))
-    post_id = Column(String, ForeignKey("reddit_posts.post_id"))
+    post_id = Column(String, ForeignKey("reddit_posts.post_id", ondelete="CASCADE"))
     
     # Relevance scores from agent analysis
     relevance_score = Column(Float)  # Legacy/primary relevance score
@@ -286,6 +287,7 @@ class RedditAgentExecutionMapperModel(Base):
 
     execution = relationship(
         "ExecutionModel", back_populates="reddit_agent_execution_mapper")
+    reddit_post = relationship("RedditPostModel", back_populates="execution_mappings")
 
     # create a unique index on execution_id and agent_id
     __table_args__ = (Index('idx_execution_agent',
